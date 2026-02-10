@@ -31,17 +31,17 @@ jobs:
 
    - name: Maven Build and Install
      env:
-       # Forces the JFrog CLI to use your wrapper (Maven 3.9.11)
+       # Use the environment variable to force the CLI to use your wrapper
        JF_MVN_PATH: ./mvnw 
      run: |
-       # 1. Ensure the wrapper is executable
+       # 1. Ensure the wrapper script you pushed to the root is executable
        chmod +x mvnw
        
-       # 2. Configure Artifactory resolution
+       # 2. Configure the project for your Artifactory repos
        jf mvnc --repo-resolve-releases test-libs-release \
                --repo-resolve-snapshots test-libs-snapshot \
                --repo-deploy-releases test-libs-release \
                --repo-deploy-snapshots test-libs-snapshot
        
-       # 3. Run the build
+       # 3. Run the build (No invalid flags needed)
        jf mvn clean install -U -ntp -B
