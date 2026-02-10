@@ -31,13 +31,15 @@ jobs:
 
    - name: Maven Build and Deploy
      run: |
-       # 1. Configure the project for your migration1 instance
+       # 1. Ensure the wrapper script in the root is executable
+       chmod +x mvnw
+       
+       # 2. Configure the CLI for your specific Artifactory repos
        jf mvnc --repo-resolve-releases test-libs-release \
                --repo-resolve-snapshots test-libs-snapshot \
                --repo-deploy-releases test-libs-release \
                --repo-deploy-snapshots test-libs-snapshot
        
-       # 2. Run the build
-       # -Dmaven.deploy.skip=true stops the 401 error from native Maven
-       # 'deploy' tells the JFrog CLI to handle the upload via OIDC
-       jf mvn clean deploy -Dmaven.deploy.skip=true -U -ntp -B
+       # 3. FORCE the CLI to use the local wrapper (./mvnw)
+       # The --mvn flag is the specific fix to bypass the incompatible global Maven
+       jf mvn clean deploy -Dmaven.deploy.skip=true -U -ntp -B --mvn ./mvnw
