@@ -40,4 +40,4 @@ jobs:
                --repo-deploy-snapshots test-libs-snapshot
        
        # Now run without the invalid --mvn flag
-       jf mvn clean deploy -Dmaven.deploy.skip=true -U -ntp -B
+       jf mvn clean install
