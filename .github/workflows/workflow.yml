@@ -1,0 +1,47 @@
+name: Push Build to Artifactory 
+
+on:
+  push:
+    paths:
+      - 'maven-examples/maven-example/**'
+
+permissions:
+  id-token: write  # Required for OIDC
+  contents: read   # Required for actions/checkout
+
+jobs:
+ build:
+   runs-on: ubuntu-latest
+  
+   steps:
+   - name: Checkout Code 
+     uses: actions/checkout@v4
+
+   - name: Set up JDK
+     uses: actions/setup-java@v4
+     with:
+       java-version: '21'
+       distribution: 'temurin'
+
+   - name: Set up JFrog CLI
+     id: setup-jfrog-cli
+     uses: jfrog/setup-jfrog-cli@v4
+     env:
+       JF_URL: https://migration1.jfrog.io
+     with:
+       oidc-provider-name: github-test
+       oidc-audience: my-aud
+       disable-auto-build-publish: false
+
+   - name: Maven Build and Deploy
+     run: |
+       # 1. Configure the project for your migration1 instance
+       jf mvnc --repo-resolve-releases test-libs-release \
+               --repo-resolve-snapshots test-libs-snapshot \
+               --repo-deploy-releases test-libs-release \
+               --repo-deploy-snapshots test-libs-snapshot
+       
+       # 2. Run the build
+       # -Dmaven.deploy.skip=true stops the 401 error from native Maven
+       # 'deploy' tells the JFrog CLI to handle the upload via OIDC
+       jf mvn clean deploy -Dmaven.deploy.skip=true -U -ntp -B
