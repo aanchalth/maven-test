@@ -29,15 +29,19 @@ jobs:
        oidc-audience: my-aud
        disable-auto-build-publish: false
 
-   - name: Maven Build and Deploy
+   - name: Maven Build and Install
      env:
-       JF_MVN_PATH: ./mvnw  # Forces the JFrog CLI to use your wrapper
+       # Forces the JFrog CLI to use your wrapper (Maven 3.9.11)
+       JF_MVN_PATH: ./mvnw 
      run: |
+       # 1. Ensure the wrapper is executable
        chmod +x mvnw
+       
+       # 2. Configure Artifactory resolution
        jf mvnc --repo-resolve-releases test-libs-release \
                --repo-resolve-snapshots test-libs-snapshot \
                --repo-deploy-releases test-libs-release \
                --repo-deploy-snapshots test-libs-snapshot
        
-       # Now run without the invalid --mvn flag
-       jf mvn clean install
+       # 3. Run the build
+       jf mvn clean install -U -ntp -B
