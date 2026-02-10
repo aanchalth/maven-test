@@ -30,16 +30,14 @@ jobs:
        disable-auto-build-publish: false
 
    - name: Maven Build and Deploy
+     env:
+       JF_MVN_PATH: ./mvnw  # Forces the JFrog CLI to use your wrapper
      run: |
-       # 1. Ensure the wrapper script in the root is executable
        chmod +x mvnw
-       
-       # 2. Configure the CLI for your specific Artifactory repos
        jf mvnc --repo-resolve-releases test-libs-release \
                --repo-resolve-snapshots test-libs-snapshot \
                --repo-deploy-releases test-libs-release \
                --repo-deploy-snapshots test-libs-snapshot
        
-       # 3. FORCE the CLI to use the local wrapper (./mvnw)
-       # The --mvn flag is the specific fix to bypass the incompatible global Maven
-       jf mvn clean deploy -Dmaven.deploy.skip=true -U -ntp -B --mvn ./mvnw
+       # Now run without the invalid --mvn flag
+       jf mvn clean deploy -Dmaven.deploy.skip=true -U -ntp -B
