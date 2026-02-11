@@ -36,7 +36,7 @@ jobs:
           chmod +x mvnw
           
           # 2. Tell JFrog CLI specifically to use the wrapper for all mvn commands
-          jf config set maven-path ./mvnw
+          #jf config set maven-path ./mvnw
           
           # 3. Configure the project
           jf mvnc --repo-resolve-releases test-libs-release \
