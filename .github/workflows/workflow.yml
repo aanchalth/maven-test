@@ -54,4 +54,4 @@ jobs:
                   --repo-deploy-snapshots test-libs-snapshot
           
           # Run the build (JFrog CLI will now use the 3.8.8 version found in the path)
-          jf mvn clean install -U -ntp -B -Dartifactory.publish.artifacts=false
+         jf mvn clean deploy -U -ntp -B
