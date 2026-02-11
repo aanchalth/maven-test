@@ -31,18 +31,19 @@ jobs:
           disable-auto-build-publish: false
 
       - name: Maven Build and Install
+        env:
+          # This variable tells the JFrog CLI tool which Maven to use
+          JF_MVN_PATH: ./mvnw
         run: |
-          # 1. Make the wrapper executable
+          # 1. Ensure the wrapper is executable
           chmod +x mvnw
           
-          # 2. Tell JFrog CLI specifically to use the wrapper for all mvn commands
-          #jf config set maven-path ./mvnw
-          
-          # 3. Configure the project
+          # 2. Configure the project for Artifactory
           jf mvnc --repo-resolve-releases test-libs-release \
                   --repo-resolve-snapshots test-libs-snapshot \
                   --repo-deploy-releases test-libs-release \
                   --repo-deploy-snapshots test-libs-snapshot
           
-          # 4. Run the build (The CLI now knows to use ./mvnw automatically)
+          # 3. Run the build. 
+          # The JFrog CLI will automatically use the path in JF_MVN_PATH.
           jf mvn clean install -U -ntp -B
