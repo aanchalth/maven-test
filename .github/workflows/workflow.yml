@@ -3,8 +3,8 @@ name: Push Build to Artifactory
 on: [push]
 
 permissions:
-  id-token: write
-  contents: read
+  id-token: write  # Required for OIDC
+  contents: read   # Required for actions/checkout
 
 jobs:
   build:
@@ -14,22 +14,26 @@ jobs:
       - name: Checkout Code 
         uses: actions/checkout@v4
 
-      - name: Set up JDK & Maven 3.8.8
+      - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
-          # This line explicitly installs Maven 3.8.8 and adds it to the PATH
-          cache: 'maven'
 
-      - name: Force Maven 3.8.8
+      - name: Download and Force Maven 3.8.8
         run: |
-          sudo apt-get remove -y apache-maven
-          wget https://archive.apache.org/dist/maven/maven-3/3.8.8/binaries/apache-maven-3.8.8-bin.tar.gz
+          # 1. Download the 3.8.8 binary directly from Apache archives
+          wget -q https://archive.apache.org/dist/maven/maven-3/3.8.8/binaries/apache-maven-3.8.8-bin.tar.gz
+          
+          # 2. Extract the archive
           tar -xzf apache-maven-3.8.8-bin.tar.gz
+          
+          # 3. Prepend the new Maven bin directory to GITHUB_PATH
+          # This ensures 'mvn' resolves to 3.8.8 instead of the system 3.9.12
           echo "$(pwd)/apache-maven-3.8.8/bin" >> $GITHUB_PATH
 
       - name: Set up JFrog CLI
+        id: setup-jfrog-cli
         uses: jfrog/setup-jfrog-cli@v4
         env:
           JF_URL: https://migration1.jfrog.io
@@ -40,12 +44,14 @@ jobs:
 
       - name: Maven Build and Install
         run: |
-          # Double check the version in logs to be sure
+          # Verify that the active Maven version is 3.8.8
           mvn -v
           
+          # Configure the project for Artifactory
           jf mvnc --repo-resolve-releases test-libs-release \
                   --repo-resolve-snapshots test-libs-snapshot \
                   --repo-deploy-releases test-libs-release \
                   --repo-deploy-snapshots test-libs-snapshot
           
+          # Run the build (JFrog CLI will now use the 3.8.8 version found in the path)
           jf mvn clean install -U -ntp -B
