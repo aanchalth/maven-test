@@ -3,8 +3,8 @@ name: Push Build to Artifactory
 on: [push]
 
 permissions:
-  id-token: write  # Required for OIDC
-  contents: read   # Required for actions/checkout
+  id-token: write
+  contents: read
 
 jobs:
   build:
@@ -32,15 +32,17 @@ jobs:
 
       - name: Maven Build and Install
         run: |
-          # Ensure the wrapper script is executable
+          # 1. Make the wrapper executable
           chmod +x mvnw
           
-          # Configure the project for Artifactory
+          # 2. Tell JFrog CLI specifically to use the wrapper for all mvn commands
+          jf config set maven-path ./mvnw
+          
+          # 3. Configure the project
           jf mvnc --repo-resolve-releases test-libs-release \
                   --repo-resolve-snapshots test-libs-snapshot \
                   --repo-deploy-releases test-libs-release \
                   --repo-deploy-snapshots test-libs-snapshot
           
-          # Force JFrog to use the local wrapper (Maven 3.9.11) 
-          # to avoid the 'prerequisitesCheckers' null error in 3.9.12
-          jf mvn clean install -U -ntp -B --mvn-path ./mvnw
+          # 4. Run the build (The CLI now knows to use ./mvnw automatically)
+          jf mvn clean install -U -ntp -B
