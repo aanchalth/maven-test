@@ -1,47 +1,46 @@
 name: Push Build to Artifactory 
 
 on: [push]
+
 permissions:
   id-token: write  # Required for OIDC
   contents: read   # Required for actions/checkout
 
 jobs:
- build:
-   runs-on: ubuntu-latest
+  build:
+    runs-on: ubuntu-latest
   
-   steps:
-   - name: Checkout Code 
-     uses: actions/checkout@v4
+    steps:
+      - name: Checkout Code 
+        uses: actions/checkout@v4
 
-   - name: Set up JDK
-     uses: actions/setup-java@v4
-     with:
-       java-version: '21'
-       distribution: 'temurin'
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
 
-   - name: Set up JFrog CLI
-     id: setup-jfrog-cli
-     uses: jfrog/setup-jfrog-cli@v4
-     env:
-       JF_URL: https://migration1.jfrog.io
-     with:
-       oidc-provider-name: github-test
-       oidc-audience: my-aud
-       disable-auto-build-publish: false
+      - name: Set up JFrog CLI
+        id: setup-jfrog-cli
+        uses: jfrog/setup-jfrog-cli@v4
+        env:
+          JF_URL: https://migration1.jfrog.io
+        with:
+          oidc-provider-name: github-test
+          oidc-audience: my-aud
+          disable-auto-build-publish: false
 
-   - name: Maven Build and Install
-     env:
-       # Use the environment variable to force the CLI to use your wrapper
-       JF_MVN_PATH: ./mvnw 
-     run: |
-       # 1. Ensure the wrapper script you pushed to the root is executable
-       chmod +x mvnw
-       
-       # 2. Configure the project for your Artifactory repos
-       jf mvnc --repo-resolve-releases test-libs-release \
-               --repo-resolve-snapshots test-libs-snapshot \
-               --repo-deploy-releases test-libs-release \
-               --repo-deploy-snapshots test-libs-snapshot
-       
-       # 3. Run the build (No invalid flags needed)
-       jf mvn clean install -U -ntp -B
+      - name: Maven Build and Install
+        run: |
+          # Ensure the wrapper script is executable
+          chmod +x mvnw
+          
+          # Configure the project for Artifactory
+          jf mvnc --repo-resolve-releases test-libs-release \
+                  --repo-resolve-snapshots test-libs-snapshot \
+                  --repo-deploy-releases test-libs-release \
+                  --repo-deploy-snapshots test-libs-snapshot
+          
+          # Force JFrog to use the local wrapper (Maven 3.9.11) 
+          # to avoid the 'prerequisitesCheckers' null error in 3.9.12
+          jf mvn clean install -U -ntp -B --mvn-path ./mvnw
